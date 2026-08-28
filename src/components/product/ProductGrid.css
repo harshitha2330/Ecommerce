@@ -1,0 +1,31 @@
+section[aria-label="Product grid"] {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+section[aria-label="Product grid"] > * {
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  section[aria-label="Product grid"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 700px) {
+  section[aria-label="Product grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  section[aria-label="Product grid"] {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

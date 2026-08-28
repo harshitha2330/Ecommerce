@@ -1,17 +1,21 @@
-export type Product = {
-  id: string
+export interface Product {
+  id: number
   name: string
-  description?: string
+  description: string
   price: number
-  imageUrl?: string
-  categoryId?: string
-  stock?: number
+  imageUrl: string
+  categoryId: number
+  categoryName: string
+  stockQuantity: number
+  rating: number
+  reviewCount: number
+  active: boolean
 }
 
-export type ProductQuery = {
-  page?: number
-  limit?: number
-  search?: string
-  categoryId?: string
-  sort?: string
+export interface ProductQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  categoryId?: number;
+  sort?: string;
 }

@@ -1,5 +1,4 @@
-import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants'
-import { getStoredString, removeStoredValue, setStoredString } from '../utils/storage'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
 export class ApiError extends Error {
   readonly status: number
@@ -13,43 +12,48 @@ export class ApiError extends Error {
   }
 }
 
-export function getAuthToken(): string | null {
-  return getStoredString(STORAGE_KEYS.authToken)
+export function getAuthToken(): null {
+  return null
 }
 
-export function setAuthToken(token: string | null): void {
-  if (token) {
-    setStoredString(STORAGE_KEYS.authToken, token)
-  } else {
-    removeStoredValue(STORAGE_KEYS.authToken)
-  }
+export function setAuthToken(_token: string | null): void {
+  // Authentication will be implemented when the backend contract is available.
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const headers = new Headers(init.headers)
+export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
 
-  if (init.body && !headers.has('Content-Type')) {
+  if (typeof options.body === 'string' && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 
-  const token = getAuthToken()
-  if (token) headers.set('Authorization', `Bearer ${token}`)
-
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers })
-  const contentType = response.headers.get('content-type') ?? ''
-  const payload = response.status === 204
-    ? undefined
-    : contentType.includes('application/json')
-      ? await response.json()
-      : await response.text()
-
-  if (!response.ok) {
-    const message = typeof payload === 'object' && payload !== null && 'message' in payload
-      ? String(payload.message)
-      : response.statusText || 'Request failed'
-    throw new ApiError(response.status, message, payload)
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to reach the backend'
+    throw new ApiError(0, `Network request failed: ${message}`)
   }
 
-  return payload as T
+  const contentType = response.headers.get('content-type') ?? ''
+  const responseText = response.status === 204 ? '' : await response.text()
+  let responseData: unknown = responseText
+
+  if (responseText && contentType.includes('application/json')) {
+    try {
+      responseData = JSON.parse(responseText) as unknown
+    } catch {
+      responseData = responseText
+    }
+  }
+
+  if (!response.ok) {
+    const message = typeof responseData === 'object' && responseData !== null && 'message' in responseData
+      ? String(responseData.message)
+      : response.statusText || 'Request failed'
+    throw new ApiError(response.status, message, responseData)
+  }
+
+  return responseData as T
 }
